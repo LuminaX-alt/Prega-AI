@@ -1,0 +1,367 @@
+import gradio as gr
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+
+# Load the model and labels
+model = tf.keras.models.load_model("ultrasound_model/ultrasound_cnn_model.h5")
+class_names = np.load("ultrasound_model/class_labels.npy")
+
+# Preprocessing function
+def preprocess_image(img):
+    img = img.convert("RGB")
+    img = img.resize((224, 224))  # Match the model's input size
+    img_array = np.array(img) / 255.0
+    return np.expand_dims(img_array, axis=0)
+
+# Prediction function
+def predict_ultrasound(image):
+    processed_image = preprocess_image(image)
+    prediction = model.predict(processed_image)[0]
+    predicted_class = class_names[np.argmax(prediction)]
+    confidence = np.max(prediction) * 100
+    return f"{predicted_class} ({confidence:.2f}% confidence)"
+
+# Gradio Interface
+interface = gr.Interface(
+    fn=predict_ultrasound,
+    inputs=gr.Image(type="pil", label="Upload Ultrasound Image"),
+    outputs=gr.Textbox(label="Prediction Result"),
+    title="Prega-AI: Ultrasound Image Analyzer",
+    description="Upload fetal ultrasound images to detect possible abnormalities using CNN.",
+    theme="default"
+)
+
+if __name__ == "__main__":
+    interface.launch()
+import numpy as np
+
+# Example: If your model classifies 3 classes
+classes = np.array(['Normal', 'Anencephaly', 'Hydrocephalus'])
+np.save('ultrasound_model/class_labels.npy', classes)
+import numpy as np
+
+# Example: If your model classifies 3 classes
+classes = np.array(['Normal', 'Anencephaly', 'Hydrocephalus'])
+np.save('ultrasound_model/class_labels.npy', classes)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Load and prepare data
+train_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    'dataset/train', target_size=(224, 224), class_mode='categorical')
+val_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    'dataset/val', target_size=(224, 224), class_mode='categorical')
+
+# Model definition
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224, 224, 3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# Save model and labels
+model.save("ultrasound_model/ultrasound_cnn_model.h5")
+np.save("ultrasound_model/class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Load and prepare data
+train_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    'dataset/train', target_size=(224, 224), class_mode='categorical')
+val_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    'dataset/val', target_size=(224, 224), class_mode='categorical')
+
+# Model definition
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224, 224, 3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# Save model and labels
+model.save("ultrasound_model/ultrasound_cnn_model.h5")
+np.save("ultrasound_model/class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+
+# 1. Load data
+train_dir = "/content/dataset/train"  # Update with your actual dataset path
+val_dir = "/content/dataset/val"
+
+train_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    train_dir, target_size=(224, 224), class_mode='categorical')
+val_gen = ImageDataGenerator(rescale=1./255).flow_from_directory(
+    val_dir, target_size=(224, 224), class_mode='categorical')
+
+# 2. Define model
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# 3. Train model
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# 4. Save model and class labels
+model.save("ultrasound_cnn_model.h5")
+np.save("class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+import os
+
+# Define dataset path
+dataset_path = "/content/ultrasound_dataset"
+
+# Prepare data generators
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2
+)
+
+train_gen = train_datagen.flow_from_directory(
+    dataset_path,
+    target_size=(224, 224),
+    class_mode='categorical',
+    subset='training'
+)
+
+val_gen = train_datagen.flow_from_directory(
+    dataset_path,
+    target_size=(224, 224),
+    class_mode='categorical',
+    subset='validation'
+)
+
+# Build model
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# Save model and labels
+model.save("ultrasound_cnn_model.h5")
+np.save("class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+import gradio as gr
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+
+# Load model and class names
+model = tf.keras.models.load_model("ultrasound_cnn_model.h5")
+class_names = np.load("class_labels.npy")
+
+def preprocess_image(img):
+    img = img.convert("RGB").resize((224, 224))
+    img = np.array(img) / 255.0
+    return np.expand_dims(img, axis=0)
+
+def predict(image):
+    image = preprocess_image(image)
+    preds = model.predict(image)[0]
+    class_idx = np.argmax(preds)
+    return f"{class_names[class_idx]} ({preds[class_idx]*100:.2f}% confidence)"
+
+interface = gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="pil", label="Upload Ultrasound Image"),
+    outputs=gr.Textbox(label="Prediction"),
+    title="Prega-AI: Ultrasound Analyzer"
+)
+
+interface.launch()
+from google.colab import files
+import zipfile
+import os
+
+# Upload your ultrasound dataset ZIP file
+uploaded = files.upload()  # A file dialog will appear
+
+# Extract the uploaded ZIP
+for file_name in uploaded.keys():
+    zip_path = file_name
+    break
+
+extract_dir = "/content/ultrasound_dataset"
+with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    zip_ref.extractall(extract_dir)
+
+print(f"✅ Extracted to: {extract_dir}")
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+
+# Define image generators
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2
+)
+
+train_gen = datagen.flow_from_directory(
+    extract_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+
+val_gen = datagen.flow_from_directory(
+    extract_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)
+
+# Build CNN model
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# Save model and class labels
+model.save("ultrasound_cnn_model.h5")
+np.save("class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+print("✅ Model and labels saved.")
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+
+# Define image generators
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2
+)
+
+train_gen = datagen.flow_from_directory(
+    extract_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+
+val_gen = datagen.flow_from_directory(
+    extract_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)
+
+# Build CNN model
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(train_gen.num_classes, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_gen, validation_data=val_gen, epochs=10)
+
+# Save model and class labels
+model.save("ultrasound_cnn_model.h5")
+np.save("class_labels.npy", np.array(list(train_gen.class_indices.keys())))
+print("✅ Model and labels saved.")
+import gradio as gr
+import tensorflow as tf
+from PIL import Image
+
+# Load model and labels
+model = tf.keras.models.load_model("ultrasound_cnn_model.h5")
+class_names = np.load("class_labels.npy")
+
+def preprocess_image(img):
+    img = img.convert("RGB").resize((224, 224))
+    img = np.array(img) / 255.0
+    return np.expand_dims(img, axis=0)
+
+def predict(image):
+    image = preprocess_image(image)
+    preds = model.predict(image)[0]
+    class_idx = np.argmax(preds)
+    return f"{class_names[class_idx]} ({preds[class_idx]*100:.2f}% confidence)"
+
+gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="pil", label="Upload Ultrasound Image"),
+    outputs=gr.Textbox(label="Prediction"),
+    title="Prega-AI: Ultrasound Analyzer",
+    description="Upload a fetal ultrasound image to identify the anatomical plane."
+).launch()
+import gradio as gr
+import tensorflow as tf
+from PIL import Image
+
+# Load model and labels
+model = tf.keras.models.load_model("ultrasound_cnn_model.h5")
+class_names = np.load("class_labels.npy")
+
+def preprocess_image(img):
+    img = img.convert("RGB").resize((224, 224))
+    img = np.array(img) / 255.0
+    return np.expand_dims(img, axis=0)
+
+def predict(image):
+    image = preprocess_image(image)
+    preds = model.predict(image)[0]
+    class_idx = np.argmax(preds)
+    return f"{class_names[class_idx]} ({preds[class_idx]*100:.2f}% confidence)"
+
+gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="pil", label="Upload Ultrasound Image"),
+    outputs=gr.Textbox(label="Prediction"),
+    title="Prega-AI: Ultrasound Analyzer",
+    description="Upload a fetal ultrasound image to identify the anatomical plane."
+).launch()
+
