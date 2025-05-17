@@ -1,0 +1,117 @@
+pip install numpy pandas scikit-learn tensorflow keras torch torchvision transformers gradio matplotlib seaborn
+patient_profile = {
+    'patient_id': 'P001',
+    'age': 28,
+    'BMI': 24.5,
+    'medical_history': {
+        'hypertension': False,
+        'diabetes': False,
+        'previous_pregnancy_complications': False,
+        # add more as needed
+    },
+    'lab_results': {
+        'blood_pressure': 120/80,
+        'blood_sugar': 90,
+        'urine_protein': 0,
+        # ...
+    },
+    'ultrasound_images': [],  # store file paths or image arrays
+    'glucose_tolerance_test': None,
+    'dietary_habits': None,
+    'symptoms': {
+        'contractions': False,
+        'mood_log': [],
+        # ...
+    }
+}
+# Step 1: Install dependencies
+!pip install gradio scikit-learn pandas numpy
+
+# Step 2: Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+import gradio as gr
+
+# Step 3: Upload your dataset
+from google.colab import files
+uploaded = files.upload()
+
+# Automatically detect and load the uploaded CSV
+import io
+for file_name in uploaded.keys():
+    df = pd.read_csv(io.BytesIO(uploaded[file_name]))
+    print(f"\nPreview of uploaded dataset ({file_name}):")
+    display(df.head())
+    break  # Load only the first uploaded file
+
+# Step 4: Preprocess and define features/labels
+# Update this line according to your column names
+X = df.drop(columns=['risk_label'])  # 'risk_label' must be your target column name
+y = df['risk_label']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train Random Forest
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluate model
+y_pred = model.predict(X_test)
+print("Classification Report:\n", classification_report(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+# Step 5: Define prediction function
+def predict_pregnancy_risk(*inputs):
+    input_data = pd.DataFrame([inputs], columns=X.columns)
+    prediction = model.predict(input_data)[0]
+    risk = "High Risk" if prediction == 1 else "Low Risk"
+    return risk
+
+# Step 6: Build Gradio Interface (auto-generated from your CSV)
+gr_inputs = []
+
+for col in X.columns:
+    if df[col].dtype == 'int64' or df[col].dtype == 'float64':
+        gr_inputs.append(gr.inputs.Number(label=col))
+    elif df[col].nunique() == 2:
+        gr_inputs.append(gr.inputs.Radio(choices=[0, 1], label=col))
+    else:
+        gr_inputs.append(gr.inputs.Textbox(label=col))
+
+gr.Interface(fn=predict_pregnancy_risk,
+             inputs=gr_inputs,
+             outputs=gr.outputs.Textbox(label="Pregnancy Risk Prediction"),
+             title="Pregnancy Risk Assessment Tool (from CSV)").launch()
+print("Columns in your uploaded CSV:")
+print(df.columns)
+# Create 'Risk' column: high risk if prevalence > 10%
+df['Risk'] = df['PREVALENCE %'].apply(lambda x: 1 if x > 10 else 0)
+# Select only numerical features
+X = df[['PREVALENCE %', 'LOWER 95% CONFIDENCE INTERVAL', 'UPPER 95% CONFIDENCE INTERVAL']]
+y = df['Risk']
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+def predict_risk(prevalence, lower, upper):
+    data = [[prevalence, lower, upper]]
+    prediction = model.predict(data)[0]
+    return "High Risk" if prediction == 1 else "Low Risk"import gradio as gr
+
+gr.Interface(
+    fn=predict_risk,
+    inputs=[
+        gr.Number(label="Prevalence %"),
+        gr.Number(label="Lower 95% CI"),
+        gr.Number(label="Upper 95% CI")
+    ],
+    outputs="text",
+    title="Pregnancy Risk Prediction Based on Prevalence Data"
+).launch()
