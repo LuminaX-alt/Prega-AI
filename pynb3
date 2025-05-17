@@ -1,0 +1,86 @@
+# Simulated patient data structure
+patient_profile = {
+    "name": "Riya Sharma",
+    "age": 28,
+    "trimester": "Second",
+    "diet_type": "Vegetarian",
+    "conditions": ["Anemia"],
+    "language": "English"
+}
+import openai
+
+def generate_diet_with_gpt(profile):
+    prompt = f"""
+    Create a detailed daily pregnancy diet plan for the following profile:
+    - Name: {profile['name']}
+    - Age: {profile['age']}
+    - Trimester: {profile['trimester']}
+    - Diet Type: {profile['diet_type']}
+    - Health Conditions: {', '.join(profile['conditions'])}
+    - Language: {profile['language']}
+
+    Format the plan as breakfast, mid-morning, lunch, snack, dinner. Avoid items unsafe during pregnancy.
+    """
+
+    openai.api_key = "YOUR_API_KEY"  # Replace with secure method
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response['choices'][0]['message']['content']
+  !pip install gradio
+!pip install fpdf
+from fpdf import FPDF
+import gradio as gr
+from fpdf import FPDF
+
+def generate_nutrition_advice(user_input):
+    # Simulated LLM-based response (you can plug in GPT or local model)
+    if "first trimester" in user_input.lower():
+        advice = """🥗 First Trimester Nutrition Plan:
+- Folic acid-rich foods (leafy greens, beans, oranges)
+- Iron-rich foods (lentils, spinach)
+- Hydration: At least 2.5L water/day
+- Avoid: raw seafood, unpasteurized dairy
+"""
+    elif "second trimester" in user_input.lower():
+        advice = """🥘 Second Trimester Nutrition Plan:
+- Calcium & Vitamin D (milk, cheese, yogurt)
+- Protein-rich foods (chicken, tofu, legumes)
+- Omega-3s (flaxseeds, walnuts, fish)
+"""
+    elif "third trimester" in user_input.lower():
+        advice = """🍲 Third Trimester Nutrition Plan:
+- Energy-boosting complex carbs (brown rice, oats)
+- Continue protein, iron, and hydration
+- Fiber-rich foods to prevent constipation
+"""
+    else:
+        advice = "Please specify your trimester to receive a personalized plan."
+
+    return advice
+
+def generate_pdf(text):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for line in text.split('\n'):
+        pdf.cell(200, 10, txt=line, ln=True)
+    pdf.output("pregnancy_diet_plan.pdf")
+    return "pregnancy_diet_plan.pdf"
+
+demo = gr.Interface(
+    fn=generate_nutrition_advice,
+    inputs=gr.Textbox(label="Enter Trimester & Health Info (e.g., 'First trimester, vegetarian, low iron')"),
+    outputs=gr.Textbox(label="Nutrition Advice"),
+    title="Pregnancy Nutrition Recommendation Bot",
+    description="Get trimester-specific diet suggestions instantly."
+)
+
+pdf_maker = gr.Interface(
+    fn=generate_pdf,
+    inputs=gr.Textbox(label="Paste Advice to Generate PDF"),
+    outputs=gr.File(label="Download PDF Diet Plan")
+)
+gr.TabbedInterface([demo, pdf_maker], ["Get Nutrition Advice", "Download PDF Plan"]).launch()
