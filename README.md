@@ -93,3 +93,12 @@ ReportLab / PDFKit – for generating patient reports
 <img width="1423" alt="image" src="https://github.com/user-attachments/assets/80c1570e-9d63-4a26-80d9-430b0f7af468" />
 
 <img width="1411" alt="image" src="https://github.com/user-attachments/assets/b07021c5-0f4d-4d60-a996-9be8b67db3e3" />
+
+<img width="389" alt="image" src="https://github.com/user-attachments/assets/533e84d9-f2e9-4d49-a522-af93b274663b" />
+
+<img width="465" alt="image" src="https://github.com/user-attachments/assets/311b1ccc-d884-4b75-8d1c-98050b9e3ae0" />
+
+<img width="430" alt="image" src="https://github.com/user-attachments/assets/b5874eb0-2069-49ef-9635-01356e515b60" />
+
+<img width="448" alt="image" src="https://github.com/user-attachments/assets/d32e33ae-7af8-40fa-a8a2-b4a137daf9b9" />
+
